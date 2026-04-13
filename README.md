@@ -68,20 +68,25 @@ Comportamiento actual del flujo inbound:
 - Si la reserva se confirma, el estado de llamada pasa a BOOKING y guarda appointmentId.
 - Si no se detecta horario, el flujo sigue por respuesta IA para recolectar preferencia.
 
-### 6) CRUD basico de clientes
+### 6) CRUD básico de clientes
+Si INTERNAL_API_KEY esta definido en entorno, estos endpoints requieren header:
+-H "x-internal-api-key: <internal_api_key>"
+
 Listar clientes:
 curl -X GET "http://localhost:3000/api/v1/customers"
 
-Consultar por telefono:
+Consultar por teléfono:
 curl -X GET "http://localhost:3000/api/v1/customers/lookup?phone=%2B34111111111"
 
 Crear cliente:
 curl -X POST "http://localhost:3000/api/v1/customers" \
+  -H "x-internal-api-key: <internal_api_key>" \
   -H "Content-Type: application/json" \
   -d '{"phone":"+34999999999","name":"Cliente Demo"}'
 
 Actualizar nombre:
 curl -X PATCH "http://localhost:3000/api/v1/customers/%2B34999999999" \
+  -H "x-internal-api-key: <internal_api_key>" \
   -H "Content-Type: application/json" \
   -d '{"name":"Cliente Demo"}'
 

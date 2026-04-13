@@ -18,6 +18,7 @@ const envSchema = z.object({
   APPOINTMENTS_API_AVAILABILITY_PATH: z.string().default("/api/v1/appointments/availability"),
   APPOINTMENTS_API_CREATE_PATH: z.string().default("/api/v1/appointments"),
   APPOINTMENTS_TIMEOUT_MS: z.string().default("6000"),
+  INTERNAL_API_KEY: z.string().optional(),
   ZADARMA_BASE_URL: z.string().url().default("https://api.zadarma.com"),
   ZADARMA_API_KEY: z.string().optional(),
   ZADARMA_API_SECRET: z.string().optional(),
