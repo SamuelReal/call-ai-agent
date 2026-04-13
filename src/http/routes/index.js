@@ -2,6 +2,7 @@ import { Router } from "express";
 import { callsRouter } from "./calls.routes.js";
 import { telephonyRouter } from "./telephony.routes.js";
 import { appointmentsRouter } from "./appointments.routes.js";
+import { customersRouter } from "./customers.routes.js";
 
 export function registerRoutes(app) {
   const router = Router();
@@ -9,6 +10,7 @@ export function registerRoutes(app) {
   router.use("/calls", callsRouter);
   router.use("/telephony", telephonyRouter);
   router.use("/appointments", appointmentsRouter);
+  router.use("/customers", customersRouter);
 
   app.use("/api/v1", router);
 }

@@ -14,6 +14,10 @@ export function getCustomerByPhone(phone) {
   return customersByPhone.get(phone) || null;
 }
 
+export function listCustomers() {
+  return Array.from(customersByPhone.values());
+}
+
 export function upsertCustomerByPhone({ phone, name }) {
   if (!phone) {
     return null;
@@ -24,6 +28,24 @@ export function upsertCustomerByPhone({ phone, name }) {
     const updated = { ...current, name: String(name || current.name || "").trim() };
     customersByPhone.set(phone, updated);
     return updated;
+  }
+
+  const created = {
+    customerId: nextCustomerId(),
+    phone,
+    name: String(name || "").trim()
+  };
+  customersByPhone.set(phone, created);
+  return created;
+}
+
+export function createCustomerByPhone({ phone, name }) {
+  if (!phone) {
+    return null;
+  }
+
+  if (customersByPhone.has(phone)) {
+    return null;
   }
 
   const created = {

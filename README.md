@@ -31,6 +31,10 @@ Servidor por defecto:
 - GET /api/v1/calls/:callId
 - POST /api/v1/appointments/availability
 - POST /api/v1/appointments
+- GET /api/v1/customers
+- GET /api/v1/customers/lookup?phone=+34...
+- POST /api/v1/customers
+- PATCH /api/v1/customers/:phone
 
 ## Pruebas rápidas
 ### 1) Crear llamada outbound
@@ -63,6 +67,23 @@ Comportamiento actual del flujo inbound:
 - Si el usuario menciona un horario reconocible (09:30, 11:00 o 16:00), el sistema intenta crear la cita automaticamente.
 - Si la reserva se confirma, el estado de llamada pasa a BOOKING y guarda appointmentId.
 - Si no se detecta horario, el flujo sigue por respuesta IA para recolectar preferencia.
+
+### 6) CRUD basico de clientes
+Listar clientes:
+curl -X GET "http://localhost:3000/api/v1/customers"
+
+Consultar por telefono:
+curl -X GET "http://localhost:3000/api/v1/customers/lookup?phone=%2B34111111111"
+
+Crear cliente:
+curl -X POST "http://localhost:3000/api/v1/customers" \
+  -H "Content-Type: application/json" \
+  -d '{"phone":"+34999999999","name":"Cliente Demo"}'
+
+Actualizar nombre:
+curl -X PATCH "http://localhost:3000/api/v1/customers/%2B34999999999" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Cliente Demo"}'
 
 ## Estado actual
 Este proyecto se encuentra aún en desarrollo y no está listo para pasar a producción.
