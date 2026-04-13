@@ -79,7 +79,12 @@ export async function handleZadarmaEvent({ payload, headers, rawBody, correlatio
       context: { callId, intent: "book_appointment" }
     });
 
-    setCallState(callId, "SLOT_COLLECTION", { lastBotReply: answer.text });
+    setCallState(callId, "SLOT_COLLECTION", {
+      lastBotReply: answer.text,
+      aiProvider: answer.provider || "deepseek",
+      aiModel: answer.model || env.DEEPSEEK_MODEL,
+      aiFallback: Boolean(answer.fallback)
+    });
 
     logger.info({ callId, correlationId, answer: answer.text }, "Generated DeepSeek response");
   }

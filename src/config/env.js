@@ -11,6 +11,7 @@ const envSchema = z.object({
   DEEPSEEK_API_KEY: z.string().optional(),
   DEEPSEEK_BASE_URL: z.string().url().default("https://api.deepseek.com"),
   DEEPSEEK_MODEL: z.string().default("deepseek-chat"),
+  DEEPSEEK_TIMEOUT_MS: z.string().default("12000"),
   ZADARMA_BASE_URL: z.string().url().default("https://api.zadarma.com"),
   ZADARMA_API_KEY: z.string().optional(),
   ZADARMA_API_SECRET: z.string().optional(),
@@ -30,5 +31,6 @@ if (!parsed.success) {
 export const env = {
   ...parsed.data,
   PORT: Number(parsed.data.PORT),
+  DEEPSEEK_TIMEOUT_MS: Number(parsed.data.DEEPSEEK_TIMEOUT_MS),
   ZADARMA_WEBHOOK_TOLERANCE_SEC: Number(parsed.data.ZADARMA_WEBHOOK_TOLERANCE_SEC)
 };
