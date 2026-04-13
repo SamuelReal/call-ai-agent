@@ -12,6 +12,15 @@ const envSchema = z.object({
   DEEPSEEK_BASE_URL: z.string().url().default("https://api.deepseek.com"),
   DEEPSEEK_MODEL: z.string().default("deepseek-chat"),
   DEEPSEEK_TIMEOUT_MS: z.string().default("12000"),
+  STORAGE_PROVIDER: z.enum(["memory", "mysql"]).default("memory"),
+  MYSQL_HOST: z.string().default("127.0.0.1"),
+  MYSQL_PORT: z.string().default("3306"),
+  MYSQL_USER: z.string().default("root"),
+  MYSQL_PASSWORD: z.string().default(""),
+  MYSQL_DATABASE: z.string().default("call_ai_agent"),
+  MYSQL_CONNECTION_LIMIT: z.string().default("10"),
+  MYSQL_SSL_ENABLED: z.string().default("false"),
+  MYSQL_SSL_REJECT_UNAUTHORIZED: z.string().default("true"),
   APPOINTMENTS_PROVIDER: z.enum(["memory", "api"]).default("memory"),
   APPOINTMENTS_API_BASE_URL: z.string().url().default("http://localhost:4001"),
   APPOINTMENTS_API_KEY: z.string().optional(),
@@ -39,10 +48,25 @@ if (!parsed.success) {
   throw new Error(`Invalid environment variables: ${parsed.error.message}`);
 }
 
+function toBoolean(value, fallback) {
+  const text = String(value ?? "").trim().toLowerCase();
+  if (["true", "1", "yes", "on"].includes(text)) {
+    return true;
+  }
+  if (["false", "0", "no", "off"].includes(text)) {
+    return false;
+  }
+  return fallback;
+}
+
 export const env = {
   ...parsed.data,
   PORT: Number(parsed.data.PORT),
   DEEPSEEK_TIMEOUT_MS: Number(parsed.data.DEEPSEEK_TIMEOUT_MS),
+  MYSQL_PORT: Number(parsed.data.MYSQL_PORT),
+  MYSQL_CONNECTION_LIMIT: Number(parsed.data.MYSQL_CONNECTION_LIMIT),
+  MYSQL_SSL_ENABLED: toBoolean(parsed.data.MYSQL_SSL_ENABLED, false),
+  MYSQL_SSL_REJECT_UNAUTHORIZED: toBoolean(parsed.data.MYSQL_SSL_REJECT_UNAUTHORIZED, true),
   APPOINTMENTS_TIMEOUT_MS: Number(parsed.data.APPOINTMENTS_TIMEOUT_MS),
   WEBHOOK_RATE_LIMIT_MAX: Number(parsed.data.WEBHOOK_RATE_LIMIT_MAX),
   WEBHOOK_RATE_LIMIT_WINDOW_MS: Number(parsed.data.WEBHOOK_RATE_LIMIT_WINDOW_MS),

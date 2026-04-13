@@ -9,6 +9,7 @@ Backend inicial para agente IA de llamadas con arquitectura preparada para:
 
 ## Requisitos
 - Node.js 20+
+- MySQL 8+ (Si se utiliza STORAGE_PROVIDER=mysql)
 
 ## Instalación
 1. Obtener el repositorio:
@@ -19,6 +20,13 @@ Backend inicial para agente IA de llamadas con arquitectura preparada para:
    - npm install
 4. Ejecutar:
    - npm run dev
+
+## Persistencia de datos
+- Por defecto: STORAGE_PROVIDER=memory.
+- Para almacenar clientes en MySQL:
+  - STORAGE_PROVIDER=mysql
+  - Configurar entorno.
+- El servicio crea automáticamente la tabla customers si no existe.
 
 Servidor por defecto:
 - http://localhost:3000

@@ -8,6 +8,7 @@ import {
 import { requireInternalApiKey } from "../middlewares/internal-auth.middleware.js";
 import { createInMemoryRateLimiter } from "../middlewares/rate-limit.middleware.js";
 import { env } from "../../config/env.js";
+import { asyncHandler } from "../middlewares/async-handler.middleware.js";
 
 export const customersRouter = Router();
 
@@ -20,7 +21,7 @@ const internalRateLimiter = createInMemoryRateLimiter({
 customersRouter.use(requireInternalApiKey);
 customersRouter.use(internalRateLimiter);
 
-customersRouter.get("/", listCustomersHandler);
-customersRouter.get("/lookup", getCustomerByPhoneHandler);
-customersRouter.post("/", createCustomerHandler);
-customersRouter.patch("/:phone", updateCustomerNameHandler);
+customersRouter.get("/", asyncHandler(listCustomersHandler));
+customersRouter.get("/lookup", asyncHandler(getCustomerByPhoneHandler));
+customersRouter.post("/", asyncHandler(createCustomerHandler));
+customersRouter.patch("/:phone", asyncHandler(updateCustomerNameHandler));

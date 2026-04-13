@@ -3,6 +3,7 @@ import { availabilityHandler, createAppointmentHandler } from "../controllers/ap
 import { requireInternalApiKey } from "../middlewares/internal-auth.middleware.js";
 import { env } from "../../config/env.js";
 import { createInMemoryRateLimiter } from "../middlewares/rate-limit.middleware.js";
+import { asyncHandler } from "../middlewares/async-handler.middleware.js";
 
 export const appointmentsRouter = Router();
 
@@ -15,5 +16,5 @@ const internalRateLimiter = createInMemoryRateLimiter({
 appointmentsRouter.use(requireInternalApiKey);
 appointmentsRouter.use(internalRateLimiter);
 
-appointmentsRouter.post("/availability", availabilityHandler);
-appointmentsRouter.post("/", createAppointmentHandler);
+appointmentsRouter.post("/availability", asyncHandler(availabilityHandler));
+appointmentsRouter.post("/", asyncHandler(createAppointmentHandler));

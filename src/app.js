@@ -2,6 +2,7 @@ import express from "express";
 import { env } from "./config/env.js";
 import { requestContextMiddleware } from "./shared/request-context.js";
 import { registerRoutes } from "./http/routes/index.js";
+import { logger } from "./observability/logger.js";
 
 export function createApp() {
   const app = express();
@@ -26,7 +27,8 @@ export function createApp() {
 
   registerRoutes(app);
 
-  app.use((err, _req, res, _next) => {
+  app.use((err, req, res, _next) => {
+    logger.error({ err: err?.message, stack: err?.stack, correlationId: req.correlationId }, "Unhandled request error");
     res.status(500).json({ error: "internal_error", message: err.message });
   });
 

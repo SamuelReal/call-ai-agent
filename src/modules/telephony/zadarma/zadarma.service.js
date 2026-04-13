@@ -107,7 +107,7 @@ export async function handleZadarmaEvent({ payload, headers, rawBody, correlatio
   }
 
   if (event === "call.started") {
-    const customer = ensureCustomerByPhone(normalized.from || "unknown");
+    const customer = await ensureCustomerByPhone(normalized.from || "unknown");
     const hasName = Boolean(customer?.name);
 
     setCallState(callId, "GREETING", {
@@ -144,7 +144,7 @@ export async function handleZadarmaEvent({ payload, headers, rawBody, correlatio
         return { accepted: true };
       }
 
-      const updatedCustomer = setCustomerNameByPhone(currentPhone, extractedName);
+      const updatedCustomer = await setCustomerNameByPhone(currentPhone, extractedName);
       setCallState(callId, "SLOT_COLLECTION", {
         customerPhone: currentPhone,
         customerId: updatedCustomer?.customerId || currentCall.customerId || null,
