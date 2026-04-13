@@ -51,6 +51,55 @@ const envSchema = z.object({
   ZADARMA_WEBHOOK_TIMESTAMP_HEADER: z.string().default("x-zadarma-timestamp"),
   ZADARMA_WEBHOOK_TOLERANCE_SEC: z.string().default("300"),
   DEFAULT_TIMEZONE: z.string().default("Europe/Madrid")
+}).superRefine((data, ctx) => {
+  const isProduction = data.NODE_ENV === "production";
+  const usesElevenLabs = data.STT_PROVIDER === "elevenlabs" || data.TTS_PROVIDER === "elevenlabs";
+  const usesMySql = data.STORAGE_PROVIDER === "mysql" || data.APPOINTMENTS_PROVIDER === "mysql";
+
+  const missing = (path, message) => {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: [path],
+      message
+    });
+  };
+
+  const hasText = (value) => String(value || "").trim().length > 0;
+
+  if (isProduction && !hasText(data.DEEPSEEK_API_KEY)) {
+    missing("DEEPSEEK_API_KEY", "required in production");
+  }
+
+  if (usesElevenLabs && !hasText(data.ELEVENLABS_API_KEY)) {
+    missing("ELEVENLABS_API_KEY", "required when STT/TTS provider is elevenlabs");
+  }
+
+  if (isProduction && !hasText(data.INTERNAL_API_KEY)) {
+    missing("INTERNAL_API_KEY", "required in production");
+  }
+
+  if (isProduction && !hasText(data.REALTIME_WS_TOKEN)) {
+    missing("REALTIME_WS_TOKEN", "required in production");
+  }
+
+  if (!hasText(data.ZADARMA_SECRET)) {
+    missing("ZADARMA_SECRET", "required to validate webhook signatures");
+  }
+
+  if (usesMySql) {
+    if (!hasText(data.MYSQL_HOST)) {
+      missing("MYSQL_HOST", "required when MySQL is enabled");
+    }
+    if (!hasText(data.MYSQL_USER)) {
+      missing("MYSQL_USER", "required when MySQL is enabled");
+    }
+    if (!hasText(data.MYSQL_PASSWORD)) {
+      missing("MYSQL_PASSWORD", "required when MySQL is enabled");
+    }
+    if (!hasText(data.MYSQL_DATABASE)) {
+      missing("MYSQL_DATABASE", "required when MySQL is enabled");
+    }
+  }
 });
 
 const parsed = envSchema.safeParse(process.env);
