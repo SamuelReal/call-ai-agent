@@ -88,12 +88,14 @@ async function callZadarmaApi({ path, payload }) {
 export async function handleZadarmaEvent({ payload, headers, rawBody, correlationId }) {
   const signature = headers[env.ZADARMA_WEBHOOK_SIGNATURE_HEADER];
   const timestamp = headers[env.ZADARMA_WEBHOOK_TIMESTAMP_HEADER];
+  const nativeSignature = headers.signature;
 
   const validSignature = isValidZadarmaSignature({
     payload,
     rawBody,
     signatureHeader: signature,
-    timestampHeader: timestamp
+    timestampHeader: timestamp,
+    nativeSignatureHeader: nativeSignature
   });
 
   if (!validSignature) {

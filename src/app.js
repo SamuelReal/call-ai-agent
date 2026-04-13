@@ -8,12 +8,23 @@ import { getReadinessReport } from "./ops/readiness.service.js";
 export function createApp() {
   const app = express();
 
+  const captureRawBody = (req, _res, buffer) => {
+    // Preserve exact request body for webhook signature verification.
+    if (!req.rawBody && buffer?.length) {
+      req.rawBody = buffer.toString("utf8");
+    }
+  };
+
   app.use(
     express.json({
       limit: "1mb",
-      verify: (req, _res, buffer) => {
-        req.rawBody = buffer.toString("utf8");
-      }
+      verify: captureRawBody
+    })
+  );
+  app.use(
+    express.urlencoded({
+      extended: false,
+      verify: captureRawBody
     })
   );
   app.use(requestContextMiddleware);
