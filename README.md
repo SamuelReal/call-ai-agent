@@ -99,6 +99,8 @@ Comportamiento actual del flujo inbound:
   - npm run e2e:realtime -- zd_rt_demo_1
 - Prueba realtime estricta (falla si STT/TTS reportan fallback):
   - npm run e2e:realtime:strict -- zd_rt_demo_1
+- Prueba local completa (levanta servidor, espera health y ejecuta estricto):
+  - npm run e2e:realtime:local -- zd_rt_demo_1
 
 Notas:
 - El script usa un fixture WAV en scripts/fixtures/e2e-es.wav.
@@ -108,6 +110,7 @@ Notas:
 - Puedes sobreescribir el archivo de audio con REALTIME_AUDIO_FIXTURE=/ruta/audio.wav.
 - En modo estricto, si no existe un WAV valido, la prueba falla explicitamente con assertion.failed (missing_fixture).
 - Timeout configurable con REALTIME_E2E_TIMEOUT_MS (default: 45000).
+- Para el runner local, timeout de health configurable con REALTIME_LOCAL_TIMEOUT_SEC (default: 30).
 
 ### 6) CRUD básico de clientes
 Si INTERNAL_API_KEY esta definido en entorno, estos endpoints requieren header:

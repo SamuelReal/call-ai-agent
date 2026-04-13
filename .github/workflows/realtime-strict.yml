@@ -27,42 +27,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Start server
-        env:
-          STT_PROVIDER: mock
-          TTS_PROVIDER: mock
-        run: |
-          nohup npm run start > server.log 2>&1 &
-          echo $! > server.pid
-
-      - name: Wait for health endpoint
-        run: |
-          for i in $(seq 1 30); do
-            if curl -fsS http://localhost:3000/health >/dev/null; then
-              exit 0
-            fi
-            sleep 1
-          done
-          echo "Server did not become healthy"
-          cat server.log || true
-          exit 1
-
       - name: Run strict realtime E2E (mock)
         env:
           STT_PROVIDER: mock
           TTS_PROVIDER: mock
-        run: npm run e2e:realtime:strict -- ci_rt_mock_1
-
-      - name: Print server log on failure
-        if: failure()
-        run: cat server.log || true
-
-      - name: Stop server
-        if: always()
-        run: |
-          if [ -f server.pid ]; then
-            kill "$(cat server.pid)" || true
-          fi
+        run: npm run e2e:realtime:local -- ci_rt_mock_1
 
   realtime-strict-elevenlabs:
     name: Realtime strict (ElevenLabs)
