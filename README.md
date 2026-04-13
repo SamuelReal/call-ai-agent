@@ -67,6 +67,10 @@ Nota de seguridad:
 - Si REALTIME_WS_TOKEN está definido, el WebSocket requiere query param token.
 - El webhook de Zadarma aplica idempotencia por event key para ignorar reintentos duplicados.
 
+Readiness:
+- /ready reporta checks de dependencias (app, mysql y credenciales de proveedores).
+- Responde 503 si falta una dependencia requerida por la configuracion activa.
+
 ## Pruebas rápidas
 ### 1) Crear llamada outbound
 curl -X POST http://localhost:3000/api/v1/calls/outbound \

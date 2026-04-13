@@ -12,6 +12,10 @@ function requiresMySqlReadiness() {
   return env.APPOINTMENTS_PROVIDER === "mysql";
 }
 
+function requiresElevenLabsCredentials() {
+  return env.STT_PROVIDER === "elevenlabs" || env.TTS_PROVIDER === "elevenlabs";
+}
+
 export function createApp() {
   const app = express();
 
@@ -32,7 +36,19 @@ export function createApp() {
   app.get("/ready", async (_req, res) => {
     const checks = {
       app: { ok: true },
-      mysql: { ok: true, required: requiresMySqlReadiness() }
+      mysql: { ok: true, required: requiresMySqlReadiness() },
+      deepseek: {
+        ok: Boolean(env.DEEPSEEK_API_KEY),
+        required: env.NODE_ENV === "production"
+      },
+      elevenlabs: {
+        ok: Boolean(env.ELEVENLABS_API_KEY),
+        required: requiresElevenLabsCredentials()
+      },
+      realtimeWsToken: {
+        ok: Boolean(env.REALTIME_WS_TOKEN),
+        required: env.NODE_ENV === "production"
+      }
     };
 
     if (checks.mysql.required) {
@@ -47,7 +63,7 @@ export function createApp() {
       }
     }
 
-    const ready = Object.values(checks).every((item) => item.ok);
+    const ready = Object.values(checks).every((item) => !item.required || item.ok);
     const body = {
       status: ready ? "ready" : "not_ready",
       service: "call-ai-agent",
