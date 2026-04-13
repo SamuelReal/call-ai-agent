@@ -47,6 +47,7 @@ Servidor por defecto:
 - PATCH /api/v1/customers/:phone
 - GET /api/v1/realtime/stats
 - POST /api/v1/realtime/stats/reset
+- GET /api/v1/ops/runtime
 
 ## Realtime STT/TTS (WebSocket)
 - WebSocket path configurable con REALTIME_WS_PATH (default: /ws/realtime)

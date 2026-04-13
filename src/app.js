@@ -3,18 +3,7 @@ import { env } from "./config/env.js";
 import { requestContextMiddleware } from "./shared/request-context.js";
 import { registerRoutes } from "./http/routes/index.js";
 import { logger } from "./observability/logger.js";
-import { pingMySql } from "./db/mysql.js";
-
-function requiresMySqlReadiness() {
-  if (env.STORAGE_PROVIDER === "mysql") {
-    return true;
-  }
-  return env.APPOINTMENTS_PROVIDER === "mysql";
-}
-
-function requiresElevenLabsCredentials() {
-  return env.STT_PROVIDER === "elevenlabs" || env.TTS_PROVIDER === "elevenlabs";
-}
+import { getReadinessReport } from "./ops/readiness.service.js";
 
 export function createApp() {
   const app = express();
@@ -34,43 +23,8 @@ export function createApp() {
   });
 
   app.get("/ready", async (_req, res) => {
-    const checks = {
-      app: { ok: true },
-      mysql: { ok: true, required: requiresMySqlReadiness() },
-      deepseek: {
-        ok: Boolean(env.DEEPSEEK_API_KEY),
-        required: env.NODE_ENV === "production"
-      },
-      elevenlabs: {
-        ok: Boolean(env.ELEVENLABS_API_KEY),
-        required: requiresElevenLabsCredentials()
-      },
-      realtimeWsToken: {
-        ok: Boolean(env.REALTIME_WS_TOKEN),
-        required: env.NODE_ENV === "production"
-      }
-    };
-
-    if (checks.mysql.required) {
-      try {
-        await pingMySql();
-      } catch (error) {
-        checks.mysql = {
-          ...checks.mysql,
-          ok: false,
-          error: env.NODE_ENV === "production" ? "mysql_unavailable" : error?.message
-        };
-      }
-    }
-
-    const ready = Object.values(checks).every((item) => !item.required || item.ok);
-    const body = {
-      status: ready ? "ready" : "not_ready",
-      service: "call-ai-agent",
-      checks
-    };
-
-    return res.status(ready ? 200 : 503).json(body);
+    const report = await getReadinessReport();
+    return res.status(report.status === "ready" ? 200 : 503).json(report);
   });
 
   app.get("/version", (_req, res) => {

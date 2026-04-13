@@ -4,6 +4,7 @@ import { telephonyRouter } from "./telephony.routes.js";
 import { appointmentsRouter } from "./appointments.routes.js";
 import { customersRouter } from "./customers.routes.js";
 import { realtimeRouter } from "./realtime.routes.js";
+import { opsRouter } from "./ops.routes.js";
 
 export function registerRoutes(app) {
   const router = Router();
@@ -13,6 +14,7 @@ export function registerRoutes(app) {
   router.use("/appointments", appointmentsRouter);
   router.use("/customers", customersRouter);
   router.use("/realtime", realtimeRouter);
+  router.use("/ops", opsRouter);
 
   app.use("/api/v1", router);
 }
