@@ -15,9 +15,9 @@ Backend inicial para agente IA de llamadas con arquitectura preparada para:
    - git clone URL
 2. Copiar y rellenar variables de entorno:
    - cp .env.example .env
-2. Instalar dependencias:
+3. Instalar dependencias:
    - npm install
-3. Ejecutar:
+4. Ejecutar:
    - npm run dev
 
 Servidor por defecto:
