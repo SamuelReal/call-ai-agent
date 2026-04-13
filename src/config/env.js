@@ -11,8 +11,14 @@ const envSchema = z.object({
   DEEPSEEK_API_KEY: z.string().optional(),
   DEEPSEEK_BASE_URL: z.string().url().default("https://api.deepseek.com"),
   DEEPSEEK_MODEL: z.string().default("deepseek-chat"),
+  ZADARMA_BASE_URL: z.string().url().default("https://api.zadarma.com"),
+  ZADARMA_API_KEY: z.string().optional(),
+  ZADARMA_API_SECRET: z.string().optional(),
+  ZADARMA_OUTBOUND_PATH: z.string().default("/v1/request/callback/"),
   ZADARMA_SECRET: z.string().optional(),
   ZADARMA_WEBHOOK_SIGNATURE_HEADER: z.string().default("x-zadarma-signature"),
+  ZADARMA_WEBHOOK_TIMESTAMP_HEADER: z.string().default("x-zadarma-timestamp"),
+  ZADARMA_WEBHOOK_TOLERANCE_SEC: z.string().default("300"),
   DEFAULT_TIMEZONE: z.string().default("Europe/Madrid")
 });
 
@@ -23,5 +29,6 @@ if (!parsed.success) {
 
 export const env = {
   ...parsed.data,
-  PORT: Number(parsed.data.PORT)
+  PORT: Number(parsed.data.PORT),
+  ZADARMA_WEBHOOK_TOLERANCE_SEC: Number(parsed.data.ZADARMA_WEBHOOK_TOLERANCE_SEC)
 };

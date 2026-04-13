@@ -7,13 +7,13 @@ const outboundSchema = z.object({
   metadata: z.record(z.any()).optional().default({})
 });
 
-export function createOutboundCallHandler(req, res) {
+export async function createOutboundCallHandler(req, res) {
   const parsed = outboundSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: "validation_error", details: parsed.error.flatten() });
   }
 
-  const job = enqueueOutboundCall(parsed.data, req.correlationId);
+  const job = await enqueueOutboundCall(parsed.data, req.correlationId);
   return res.status(202).json(job);
 }
 

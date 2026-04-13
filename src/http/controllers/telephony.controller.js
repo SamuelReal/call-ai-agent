@@ -4,6 +4,7 @@ export async function zadarmaWebhookHandler(req, res) {
   const result = await handleZadarmaEvent({
     payload: req.body,
     headers: req.headers,
+    rawBody: req.rawBody,
     correlationId: req.correlationId
   });
 

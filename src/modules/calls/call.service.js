@@ -1,7 +1,7 @@
 import { createOutboundJob, readCall, upsertCall } from "./call.store.js";
 import { createZadarmaOutbound } from "../telephony/zadarma/zadarma.service.js";
 
-export function enqueueOutboundCall(payload, correlationId) {
+export async function enqueueOutboundCall(payload, correlationId) {
   const job = createOutboundJob(payload);
 
   upsertCall(job.jobId, {
@@ -13,13 +13,17 @@ export function enqueueOutboundCall(payload, correlationId) {
     correlationId
   });
 
-  createZadarmaOutbound({
+  const outboundResult = await createZadarmaOutbound({
     phone: payload.phone,
     callId: job.jobId,
     campaign: payload.campaign
   });
 
-  return { jobId: job.jobId, status: job.status };
+  return {
+    jobId: job.jobId,
+    status: outboundResult.ok ? job.status : "failed",
+    simulated: outboundResult.simulated || false
+  };
 }
 
 export function getCallStatus(callId) {
