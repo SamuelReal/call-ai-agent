@@ -1,5 +1,6 @@
 import mysql from "mysql2/promise";
 import { env } from "../config/env.js";
+import { runMySqlMigrations } from "./migrations.runner.js";
 
 let pool;
 let schemaReadyPromise;
@@ -35,38 +36,7 @@ export async function ensureMySqlSchema() {
   }
 
   schemaReadyPromise = (async () => {
-    const db = getMySqlPool();
-    await db.query(`
-      CREATE TABLE IF NOT EXISTS customers (
-        customer_id VARCHAR(64) PRIMARY KEY,
-        phone VARCHAR(32) NOT NULL UNIQUE,
-        name VARCHAR(128) NOT NULL DEFAULT '',
-        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-      )
-    `);
-
-    await db.query(`
-      CREATE TABLE IF NOT EXISTS calls (
-        call_id VARCHAR(64) PRIMARY KEY,
-        data_json JSON NOT NULL,
-        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-      )
-    `);
-
-    await db.query(`
-      CREATE TABLE IF NOT EXISTS appointments (
-        appointment_id VARCHAR(64) PRIMARY KEY,
-        name VARCHAR(128) NOT NULL,
-        phone VARCHAR(32) NOT NULL,
-        slot VARCHAR(64) NOT NULL UNIQUE,
-        source VARCHAR(64) NOT NULL DEFAULT 'voice_bot',
-        status VARCHAR(32) NOT NULL DEFAULT 'confirmed',
-        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-      )
-    `);
+    await runMySqlMigrations(getMySqlPool());
   })();
 
   return schemaReadyPromise;

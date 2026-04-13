@@ -23,11 +23,10 @@ Backend inicial para agente IA de llamadas con arquitectura preparada para:
 
 ## Persistencia de datos
 - Por defecto: STORAGE_PROVIDER=memory.
-- Para almacenar clientes, estados de llamadas y citas en MySQL:
+- Para persistir clientes, estados de llamada y citas en MySQL:
   - STORAGE_PROVIDER=mysql
-  - APPOINTMENTS_PROVIDER=mysql (Opcional, si no se define y STORAGE_PROVIDER=mysql, usará MySQL para citas por defecto).
-  - Configurar entorno.
-- El servicio crea automáticamente las tablas customers, calls y appointments si no existen.
+  - APPOINTMENTS_PROVIDER=mysql (opcional; si no se define y STORAGE_PROVIDER=mysql, usara MySQL para citas)
+- El backend ejecuta las migraciones automáticamente en el primer acceso a MySQL.
 
 Servidor por defecto:
 - http://localhost:3000
