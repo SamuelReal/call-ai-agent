@@ -46,6 +46,7 @@ const envSchema = z.object({
   ZADARMA_API_KEY: z.string().optional(),
   ZADARMA_API_SECRET: z.string().optional(),
   ZADARMA_OUTBOUND_PATH: z.string().default("/v1/request/callback/"),
+  ZADARMA_NOTIFY_START_REDIRECT: z.string().optional(),
   ZADARMA_SECRET: z.string().optional(),
   ZADARMA_WEBHOOK_SIGNATURE_HEADER: z.string().default("x-zadarma-signature"),
   ZADARMA_WEBHOOK_TIMESTAMP_HEADER: z.string().default("x-zadarma-timestamp"),

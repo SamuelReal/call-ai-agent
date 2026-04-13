@@ -8,12 +8,30 @@ import { createZadarmaApiSignature, isValidZadarmaSignature } from "./zadarma.se
 import { buildWebhookEventKey, registerWebhookEvent } from "./zadarma.idempotency.js";
 
 function normalizeEvent(payload) {
+  const rawEvent = String(payload?.event || payload?.event_name || payload?.type || "");
+  const upperEvent = rawEvent.toUpperCase();
+
+  let mappedEvent = rawEvent;
+  if (upperEvent === "NOTIFY_START") {
+    mappedEvent = "call.started";
+  } else if (upperEvent === "NOTIFY_END" || upperEvent === "NOTIFY_OUT_END") {
+    mappedEvent = "call.ended";
+  } else if (upperEvent === "SPEECH_RECOGNITION") {
+    mappedEvent = "speech.final";
+  }
+
+  const phrases = payload?.result?.phrases;
+  const speechText = Array.isArray(phrases)
+    ? phrases.map((item) => item?.result || "").filter(Boolean).join(" ")
+    : "";
+
   return {
-    event: payload?.event || payload?.event_name || payload?.type,
+    event: mappedEvent,
+    rawEvent,
     callId: payload?.callId || payload?.call_id || payload?.pbx_call_id,
     direction: payload?.direction || payload?.call_direction,
     from: payload?.from || payload?.caller_id || payload?.phone,
-    text: payload?.text || payload?.speech || payload?.transcript,
+    text: payload?.text || payload?.speech || payload?.transcript || speechText,
     outcome: payload?.outcome || payload?.status
   };
 }
@@ -121,6 +139,11 @@ export async function handleZadarmaEvent({ payload, headers, rawBody, correlatio
   if (!shouldProcess) {
     logger.info({ callId, correlationId, event, eventKey }, "Duplicate Zadarma webhook ignored");
     return { accepted: true, duplicate: true };
+  }
+
+  if (String(normalized.rawEvent || "").toUpperCase() === "NOTIFY_START" && env.ZADARMA_NOTIFY_START_REDIRECT) {
+    logger.info({ callId, correlationId, redirect: env.ZADARMA_NOTIFY_START_REDIRECT }, "Returning Zadarma redirect action");
+    return { accepted: true, control: { redirect: env.ZADARMA_NOTIFY_START_REDIRECT } };
   }
 
   if (event === "call.started") {

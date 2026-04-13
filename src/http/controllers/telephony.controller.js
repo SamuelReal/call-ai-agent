@@ -21,5 +21,9 @@ export async function zadarmaWebhookHandler(req, res) {
     return res.status(401).json({ ok: false, error: result.reason });
   }
 
+  if (result.control) {
+    return res.status(200).json(result.control);
+  }
+
   return res.status(200).json({ ok: true, duplicate: Boolean(result.duplicate) });
 }
