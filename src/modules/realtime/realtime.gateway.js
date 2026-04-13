@@ -7,17 +7,21 @@ import { synthesizeSpeech } from "./tts.service.js";
 import { transcribeAudioChunk } from "./stt.service.js";
 
 const sessions = new Map();
-const metrics = {
-  totalConnections: 0,
-  activeSessions: 0,
-  audioChunksReceived: 0,
-  sttFallbacks: 0,
-  ttsFallbacks: 0,
-  processingErrors: 0,
-  connectedAt: null,
-  lastEventAt: null,
-  lastErrorAt: null
-};
+function createInitialMetrics() {
+  return {
+    totalConnections: 0,
+    activeSessions: 0,
+    audioChunksReceived: 0,
+    sttFallbacks: 0,
+    ttsFallbacks: 0,
+    processingErrors: 0,
+    connectedAt: null,
+    lastEventAt: null,
+    lastErrorAt: null
+  };
+}
+
+const metrics = createInitialMetrics();
 
 function markEvent() {
   metrics.lastEventAt = new Date().toISOString();
@@ -190,4 +194,16 @@ export function getRealtimeRuntimeStats() {
       activeSessions: sessions.size
     }
   };
+}
+
+export function resetRealtimeRuntimeStats() {
+  const activeSessions = sessions.size;
+  const connectedAt = metrics.connectedAt;
+  const next = createInitialMetrics();
+  next.connectedAt = connectedAt;
+  next.activeSessions = activeSessions;
+  next.lastEventAt = new Date().toISOString();
+  Object.assign(metrics, next);
+
+  return getRealtimeRuntimeStats();
 }

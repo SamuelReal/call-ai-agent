@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getRealtimeStatsHandler } from "../controllers/realtime.controller.js";
+import { getRealtimeStatsHandler, resetRealtimeStatsHandler } from "../controllers/realtime.controller.js";
 import { requireInternalApiKey } from "../middlewares/internal-auth.middleware.js";
 import { env } from "../../config/env.js";
 import { createInMemoryRateLimiter } from "../middlewares/rate-limit.middleware.js";
@@ -17,3 +17,4 @@ realtimeRouter.use(requireInternalApiKey);
 realtimeRouter.use(internalRateLimiter);
 
 realtimeRouter.get("/stats", asyncHandler(getRealtimeStatsHandler));
+realtimeRouter.post("/stats/reset", asyncHandler(resetRealtimeStatsHandler));
