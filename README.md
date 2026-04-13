@@ -34,6 +34,7 @@ Servidor por defecto:
 
 ## Endpoints disponibles
 - GET /health
+- GET /ready
 - GET /version
 - POST /api/v1/telephony/zadarma/webhook
 - POST /api/v1/calls/outbound

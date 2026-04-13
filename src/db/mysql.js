@@ -41,3 +41,19 @@ export async function ensureMySqlSchema() {
 
   return schemaReadyPromise;
 }
+
+export async function pingMySql() {
+  const db = getMySqlPool();
+  await db.query("SELECT 1");
+}
+
+export async function closeMySqlPool() {
+  if (!pool) {
+    return;
+  }
+
+  const current = pool;
+  pool = undefined;
+  schemaReadyPromise = undefined;
+  await current.end();
+}

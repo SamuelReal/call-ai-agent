@@ -235,3 +235,21 @@ export function resetRealtimeRuntimeStats() {
 
   return getRealtimeRuntimeStats();
 }
+
+export async function closeRealtimeGateway(wss) {
+  if (!wss) {
+    return;
+  }
+
+  for (const ws of wss.clients) {
+    try {
+      ws.close(1001, "server_shutdown");
+    } catch {
+      ws.terminate();
+    }
+  }
+
+  await new Promise((resolve) => {
+    wss.close(() => resolve());
+  });
+}

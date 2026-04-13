@@ -3,6 +3,14 @@ import { env } from "./config/env.js";
 import { requestContextMiddleware } from "./shared/request-context.js";
 import { registerRoutes } from "./http/routes/index.js";
 import { logger } from "./observability/logger.js";
+import { pingMySql } from "./db/mysql.js";
+
+function requiresMySqlReadiness() {
+  if (env.STORAGE_PROVIDER === "mysql") {
+    return true;
+  }
+  return env.APPOINTMENTS_PROVIDER === "mysql";
+}
 
 export function createApp() {
   const app = express();
@@ -19,6 +27,34 @@ export function createApp() {
 
   app.get("/health", (_req, res) => {
     res.status(200).json({ status: "ok", service: "call-ai-agent" });
+  });
+
+  app.get("/ready", async (_req, res) => {
+    const checks = {
+      app: { ok: true },
+      mysql: { ok: true, required: requiresMySqlReadiness() }
+    };
+
+    if (checks.mysql.required) {
+      try {
+        await pingMySql();
+      } catch (error) {
+        checks.mysql = {
+          ...checks.mysql,
+          ok: false,
+          error: env.NODE_ENV === "production" ? "mysql_unavailable" : error?.message
+        };
+      }
+    }
+
+    const ready = Object.values(checks).every((item) => item.ok);
+    const body = {
+      status: ready ? "ready" : "not_ready",
+      service: "call-ai-agent",
+      checks
+    };
+
+    return res.status(ready ? 200 : 503).json(body);
   });
 
   app.get("/version", (_req, res) => {
