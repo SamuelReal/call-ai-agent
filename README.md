@@ -1,0 +1,57 @@
+# Call AI Agent (Node.js)
+
+Backend inicial para agente IA de llamadas con arquitectura preparada para:
+- Proveedor de telefonía: Zadarma (Telefonía)
+- Proveedor de inteligencia artificial: DeepSeek (Inteligencia Artificial)
+- Proveedor de transcripción voz a texto (STT): Aún sin definir
+- Proveedor de transcripción texto a voz (TTS): Aún sin definir
+- Caso principal: Agendamiento de citas (inbound y outbound)
+
+## Requisitos
+- Node.js 20+
+
+## Instalación
+1. Obtener el repositorio:
+   - git clone URL
+2. Copiar y rellenar variables de entorno:
+   - cp .env.example .env
+2. Instalar dependencias:
+   - npm install
+3. Ejecutar:
+   - npm run dev
+
+Servidor por defecto:
+- http://localhost:3000
+
+## Endpoints disponibles
+- GET /health
+- GET /version
+- POST /api/v1/telephony/zadarma/webhook
+- POST /api/v1/calls/outbound
+- GET /api/v1/calls/:callId
+- POST /api/v1/appointments/availability
+- POST /api/v1/appointments
+
+## Pruebas rápidas
+### 1) Crear llamada outbound
+curl -X POST http://localhost:3000/api/v1/calls/outbound \
+  -H "Content-Type: application/json" \
+  -d '{"phone":"+34123456789","campaign":"agendamiento"}'
+
+### 2) Consultar disponibilidad
+curl -X POST http://localhost:3000/api/v1/appointments/availability \
+  -H "Content-Type: application/json" \
+  -d '{"dateFrom":"2026-04-16","dateTo":"2026-04-20","timezone":"Europe/Madrid"}'
+
+### 3) Crear cita
+curl -X POST http://localhost:3000/api/v1/appointments \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Cliente Demo","phone":"+34123456789","slot":"2026-04-16T09:30:00+02:00","source":"voice_bot"}'
+
+### 4) Simular webhook de Zadarma
+curl -X POST http://localhost:3000/api/v1/telephony/zadarma/webhook \
+  -H "Content-Type: application/json" \
+  -d '{"event":"call.started","callId":"zd_123","direction":"inbound","from":"+34","to":"+34"}'
+
+## Estado actual
+Este proyecto se encuentra aún en desarrollo y no está listo para pasar a producción.
