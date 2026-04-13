@@ -38,7 +38,8 @@ async function handleAudioChunk(ws, message) {
     type: "stt.transcript",
     provider: stt.provider,
     text: stt.text,
-    isFinal: stt.isFinal
+    isFinal: stt.isFinal,
+    fallback: Boolean(stt.fallback)
   });
 
   if (!stt.isFinal || !stt.text) {
@@ -75,7 +76,8 @@ async function handleAudioChunk(ws, message) {
     type: "tts.audio",
     provider: tts.provider,
     mimeType: tts.mimeType,
-    audioBase64: tts.audioBase64
+    audioBase64: tts.audioBase64,
+    fallback: Boolean(tts.fallback)
   });
 }
 

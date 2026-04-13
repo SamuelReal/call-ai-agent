@@ -58,8 +58,6 @@ Servidor por defecto:
   - llm.reply
   - tts.audio
 
-Nota:
-- En esta fase, STT y TTS funcionan en modo mock realtime para validar la arquitectura y la orquestacion de audio en vivo.
 
 Nota de seguridad:
 - Si INTERNAL_API_KEY esta definido, endpoints de customers y appointments requieren header x-internal-api-key.

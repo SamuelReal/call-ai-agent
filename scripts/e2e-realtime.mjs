@@ -1,14 +1,27 @@
 import WebSocket from "ws";
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 const baseUrl = process.env.BASE_WS_URL || "ws://localhost:3000";
 const callId = process.argv[2] || "zd_realtime_1";
 const ws = new WebSocket(`${baseUrl}/ws/realtime?callId=${encodeURIComponent(callId)}`);
+const fallbackTranscript = "hola, necesito una cita para manana por la manana";
+
+function loadAudioFixtureBase64() {
+  const fixturePath = process.env.REALTIME_AUDIO_FIXTURE || resolve(process.cwd(), "scripts/fixtures/e2e-es.wav");
+  if (!existsSync(fixturePath)) {
+    return null;
+  }
+  return readFileSync(fixturePath).toString("base64");
+}
+
+const fixtureAudioBase64 = loadAudioFixtureBase64();
 
 function sendAudioChunk(transcript, isFinal = true) {
   ws.send(
     JSON.stringify({
       type: "audio_chunk",
-      audioBase64: Buffer.from(transcript, "utf8").toString("base64"),
+      audioBase64: fixtureAudioBase64 || Buffer.from(transcript, "utf8").toString("base64"),
       simulatedTranscript: transcript,
       isFinal
     })
@@ -26,7 +39,7 @@ ws.on("message", (raw) => {
   console.log(msg);
 
   if (msg.type === "session.ready") {
-    sendAudioChunk("hola, necesito una cita para manana por la manana", true);
+    sendAudioChunk(fallbackTranscript, true);
     return;
   }
 
