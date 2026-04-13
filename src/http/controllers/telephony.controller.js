@@ -1,5 +1,14 @@
 import { handleZadarmaEvent } from "../../modules/telephony/zadarma/zadarma.service.js";
 
+export async function zadarmaWebhookEchoHandler(req, res) {
+  const challenge = String(req.query?.zd_echo || "");
+  if (!challenge) {
+    return res.status(400).send("missing_zd_echo");
+  }
+
+  return res.status(200).type("text/plain").send(challenge);
+}
+
 export async function zadarmaWebhookHandler(req, res) {
   const result = await handleZadarmaEvent({
     payload: req.body,

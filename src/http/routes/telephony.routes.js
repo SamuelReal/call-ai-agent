@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { zadarmaWebhookHandler } from "../controllers/telephony.controller.js";
+import { zadarmaWebhookEchoHandler, zadarmaWebhookHandler } from "../controllers/telephony.controller.js";
 import { createInMemoryRateLimiter } from "../middlewares/rate-limit.middleware.js";
 import { env } from "../../config/env.js";
 import { asyncHandler } from "../middlewares/async-handler.middleware.js";
@@ -13,3 +13,4 @@ const webhookRateLimiter = createInMemoryRateLimiter({
 });
 
 telephonyRouter.post("/zadarma/webhook", webhookRateLimiter, asyncHandler(zadarmaWebhookHandler));
+telephonyRouter.get("/zadarma/webhook", asyncHandler(zadarmaWebhookEchoHandler));
