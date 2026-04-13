@@ -110,6 +110,8 @@ Comportamiento actual del flujo inbound:
   - npm run e2e:realtime:strict -- zd_rt_demo_1
 - Prueba local completa (levanta servidor, espera health y ejecuta estricto):
   - npm run e2e:realtime:local -- zd_rt_demo_1
+- Prueba local de hardening (readiness, auth interna, ws token, idempotencia webhook):
+  - npm run e2e:hardening:local
 
 Notas:
 - El script usa un fixture WAV en scripts/fixtures/e2e-es.wav.

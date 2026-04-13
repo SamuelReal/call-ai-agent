@@ -39,3 +39,6 @@ jobs:
           STT_PROVIDER: mock
           TTS_PROVIDER: mock
         run: npm run e2e:realtime:local -- ci_rt_mock_1
+
+      - name: Run hardening E2E (local)
+        run: npm run e2e:hardening:local

@@ -12,7 +12,8 @@
     "db:migrate": "node src/db/run-migrations.js",
     "e2e:realtime": "node scripts/e2e-realtime.mjs",
     "e2e:realtime:strict": "node scripts/e2e-realtime.mjs --assert-no-fallback",
-    "e2e:realtime:local": "bash scripts/e2e-realtime-local.sh"
+    "e2e:realtime:local": "bash scripts/e2e-realtime-local.sh",
+    "e2e:hardening:local": "bash scripts/e2e-hardening-local.sh"
   },
   "engines": {
     "node": ">=20.0.0"
