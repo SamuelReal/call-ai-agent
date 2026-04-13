@@ -44,6 +44,7 @@ Servidor por defecto:
 - GET /api/v1/customers/lookup?phone=+34...
 - POST /api/v1/customers
 - PATCH /api/v1/customers/:phone
+- GET /api/v1/realtime/stats
 
 ## Realtime STT/TTS (WebSocket)
 - WebSocket path configurable con REALTIME_WS_PATH (default: /ws/realtime)

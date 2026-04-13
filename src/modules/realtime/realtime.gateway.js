@@ -7,6 +7,21 @@ import { synthesizeSpeech } from "./tts.service.js";
 import { transcribeAudioChunk } from "./stt.service.js";
 
 const sessions = new Map();
+const metrics = {
+  totalConnections: 0,
+  activeSessions: 0,
+  audioChunksReceived: 0,
+  sttFallbacks: 0,
+  ttsFallbacks: 0,
+  processingErrors: 0,
+  connectedAt: null,
+  lastEventAt: null,
+  lastErrorAt: null
+};
+
+function markEvent() {
+  metrics.lastEventAt = new Date().toISOString();
+}
 
 function parseCallIdFromRequest(urlValue) {
   const url = new URL(urlValue, "http://localhost");
@@ -22,6 +37,9 @@ function safeSend(ws, payload) {
 }
 
 async function handleAudioChunk(ws, message) {
+  metrics.audioChunksReceived += 1;
+  markEvent();
+
   const session = sessions.get(ws);
   if (!session?.callId) {
     safeSend(ws, { type: "error", message: "callId not found in session" });
@@ -41,6 +59,10 @@ async function handleAudioChunk(ws, message) {
     isFinal: stt.isFinal,
     fallback: Boolean(stt.fallback)
   });
+
+  if (stt.fallback) {
+    metrics.sttFallbacks += 1;
+  }
 
   if (!stt.isFinal || !stt.text) {
     return;
@@ -79,6 +101,10 @@ async function handleAudioChunk(ws, message) {
     audioBase64: tts.audioBase64,
     fallback: Boolean(tts.fallback)
   });
+
+  if (tts.fallback) {
+    metrics.ttsFallbacks += 1;
+  }
 }
 
 function handleClientMessage(ws, raw) {
@@ -92,6 +118,8 @@ function handleClientMessage(ws, raw) {
 
   if (message.type === "audio_chunk") {
     handleAudioChunk(ws, message).catch((error) => {
+      metrics.processingErrors += 1;
+      metrics.lastErrorAt = new Date().toISOString();
       logger.error({ err: error?.message }, "Realtime audio chunk processing failed");
       safeSend(ws, { type: "error", message: "processing_error" });
     });
@@ -109,10 +137,14 @@ function handleClientMessage(ws, raw) {
 export function setupRealtimeGateway(httpServer) {
   const wsPath = env.REALTIME_WS_PATH;
   const wss = new WebSocketServer({ server: httpServer, path: wsPath });
+  metrics.connectedAt = new Date().toISOString();
 
   wss.on("connection", async (ws, req) => {
     const callId = parseCallIdFromRequest(req.url || "");
     sessions.set(ws, { callId });
+    metrics.totalConnections += 1;
+    metrics.activeSessions = sessions.size;
+    markEvent();
 
     if (!callId) {
       safeSend(ws, { type: "error", message: "missing_callId_query_param" });
@@ -137,9 +169,25 @@ export function setupRealtimeGateway(httpServer) {
 
     ws.on("close", () => {
       sessions.delete(ws);
+      metrics.activeSessions = sessions.size;
+      markEvent();
     });
   });
 
   logger.info({ wsPath }, "Realtime WebSocket gateway initialized");
   return wss;
+}
+
+export function getRealtimeRuntimeStats() {
+  return {
+    wsPath: env.REALTIME_WS_PATH,
+    providers: {
+      stt: env.STT_PROVIDER,
+      tts: env.TTS_PROVIDER
+    },
+    metrics: {
+      ...metrics,
+      activeSessions: sessions.size
+    }
+  };
 }
