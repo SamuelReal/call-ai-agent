@@ -45,6 +45,22 @@ Servidor por defecto:
 - POST /api/v1/customers
 - PATCH /api/v1/customers/:phone
 
+## Realtime STT/TTS (WebSocket)
+- WebSocket path configurable con REALTIME_WS_PATH (default: /ws/realtime)
+- Conexion ejemplo:
+  - ws://localhost:3000/ws/realtime?callId=zd_live_1
+- Mensajes entrantes soportados:
+  - {"type":"audio_chunk","audioBase64":"...","simulatedTranscript":"hola","isFinal":true}
+  - {"type":"ping"}
+- Eventos salientes:
+  - session.ready
+  - stt.transcript
+  - llm.reply
+  - tts.audio
+
+Nota:
+- En esta fase, STT y TTS funcionan en modo mock realtime para validar la arquitectura y la orquestacion de audio en vivo.
+
 Nota de seguridad:
 - Si INTERNAL_API_KEY esta definido, endpoints de customers y appointments requieren header x-internal-api-key.
 - El webhook de Zadarma tiene rate limit en memoria configurable.
