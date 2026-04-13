@@ -58,7 +58,6 @@ Servidor por defecto:
   - llm.reply
   - tts.audio
 
-
 Nota de seguridad:
 - Si INTERNAL_API_KEY esta definido, endpoints de customers y appointments requieren header x-internal-api-key.
 - El webhook de Zadarma tiene rate limit en memoria configurable.
@@ -94,6 +93,17 @@ Comportamiento actual del flujo inbound:
 - Si el usuario menciona un horario reconocible (09:30, 11:00 o 16:00), el sistema intenta crear la cita automaticamente.
 - Si la reserva se confirma, el estado de llamada pasa a BOOKING y guarda appointmentId.
 - Si no se detecta horario, el flujo sigue por respuesta IA para recolectar preferencia.
+
+### 5.1) Prueba E2E realtime
+- Prueba realtime simple:
+  - npm run e2e:realtime -- zd_rt_demo_1
+- Prueba realtime estricta (falla si STT/TTS reportan fallback):
+  - npm run e2e:realtime:strict -- zd_rt_demo_1
+
+Notas:
+- El script usa un fixture WAV en scripts/fixtures/e2e-es.wav.
+- Si el fixture no existe en macOS, intenta generarlo automaticamente con los comandos say y afconvert.
+- Puedes sobreescribir el archivo de audio con REALTIME_AUDIO_FIXTURE=/ruta/audio.wav.
 
 ### 6) CRUD básico de clientes
 Si INTERNAL_API_KEY esta definido en entorno, estos endpoints requieren header:
