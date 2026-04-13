@@ -5,6 +5,7 @@ import { generateReplyText } from "../../ai/deepseek/deepseek.service.js";
 import { checkAvailability, createAppointment } from "../../appointments/appointment.service.js";
 import { ensureCustomerByPhone, setCustomerNameByPhone } from "../../customers/customer.service.js";
 import { createZadarmaApiSignature, isValidZadarmaSignature } from "./zadarma.security.js";
+import { buildWebhookEventKey, registerWebhookEvent } from "./zadarma.idempotency.js";
 
 function normalizeEvent(payload) {
   return {
@@ -104,6 +105,20 @@ export async function handleZadarmaEvent({ payload, headers, rawBody, correlatio
   const callId = normalized.callId;
   if (!event || !callId) {
     return { accepted: false, reason: "invalid_payload" };
+  }
+
+  const eventKey = buildWebhookEventKey({ payload, rawBody, signature, timestamp });
+  const shouldProcess = await registerWebhookEvent({
+    eventKey,
+    provider: "zadarma",
+    event,
+    callId,
+    payload
+  });
+
+  if (!shouldProcess) {
+    logger.info({ callId, correlationId, event, eventKey }, "Duplicate Zadarma webhook ignored");
+    return { accepted: true, duplicate: true };
   }
 
   if (event === "call.started") {

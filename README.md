@@ -63,6 +63,8 @@ Servidor por defecto:
 Nota de seguridad:
 - Si INTERNAL_API_KEY esta definido, endpoints de customers y appointments requieren header x-internal-api-key.
 - El webhook de Zadarma tiene rate limit en memoria configurable.
+- Si REALTIME_WS_TOKEN está definido, el WebSocket requiere query param token.
+- El webhook de Zadarma aplica idempotencia por event key para ignorar reintentos duplicados.
 
 ## Pruebas rápidas
 ### 1) Crear llamada outbound

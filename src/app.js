@@ -29,7 +29,8 @@ export function createApp() {
 
   app.use((err, req, res, _next) => {
     logger.error({ err: err?.message, stack: err?.stack, correlationId: req.correlationId }, "Unhandled request error");
-    res.status(500).json({ error: "internal_error", message: err.message });
+    const message = env.NODE_ENV === "production" ? "unexpected internal error" : err.message;
+    res.status(500).json({ error: "internal_error", message });
   });
 
   return app;

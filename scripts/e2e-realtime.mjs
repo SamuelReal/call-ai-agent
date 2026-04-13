@@ -7,6 +7,7 @@ const baseUrl = process.env.BASE_WS_URL || "ws://localhost:3000";
 const args = process.argv.slice(2);
 const strictNoFallback = args.includes("--assert-no-fallback");
 const callId = args.find((arg) => !arg.startsWith("--")) || "zd_realtime_1";
+const wsToken = process.env.REALTIME_WS_TOKEN || "";
 const fallbackTranscript = "hola, necesito una cita para manana por la manana";
 const fixturePath = process.env.REALTIME_AUDIO_FIXTURE || resolve(process.cwd(), "scripts/fixtures/e2e-es.wav");
 const timeoutMs = Number(process.env.REALTIME_E2E_TIMEOUT_MS || 45000);
@@ -145,7 +146,11 @@ try {
   });
 }
 
-const ws = new WebSocket(`${baseUrl}/ws/realtime?callId=${encodeURIComponent(callId)}`);
+const wsQuery = new URLSearchParams({ callId });
+if (wsToken) {
+  wsQuery.set("token", wsToken);
+}
+const ws = new WebSocket(`${baseUrl}/ws/realtime?${wsQuery.toString()}`);
 const watchdog = setTimeout(() => {
   finish(1, { type: "assertion.failed", reason: "timeout", timeoutMs });
 }, timeoutMs);

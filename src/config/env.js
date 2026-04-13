@@ -13,6 +13,7 @@ const envSchema = z.object({
   DEEPSEEK_MODEL: z.string().default("deepseek-chat"),
   DEEPSEEK_TIMEOUT_MS: z.string().default("12000"),
   REALTIME_WS_PATH: z.string().default("/ws/realtime"),
+  REALTIME_WS_TOKEN: z.string().optional(),
   STT_PROVIDER: z.enum(["mock", "openai", "deepgram", "elevenlabs"]).default("mock"),
   TTS_PROVIDER: z.enum(["mock", "openai", "elevenlabs"]).default("mock"),
   ELEVENLABS_API_KEY: z.string().optional(),

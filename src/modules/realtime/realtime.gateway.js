@@ -1,4 +1,5 @@
 import { WebSocketServer } from "ws";
+import { timingSafeEqual } from "node:crypto";
 import { env } from "../../config/env.js";
 import { logger } from "../../observability/logger.js";
 import { generateReplyText } from "../ai/deepseek/deepseek.service.js";
@@ -31,6 +32,26 @@ function parseCallIdFromRequest(urlValue) {
   const url = new URL(urlValue, "http://localhost");
   const callId = url.searchParams.get("callId");
   return callId ? callId.trim() : "";
+}
+
+function parseRealtimeTokenFromRequest(urlValue) {
+  const url = new URL(urlValue, "http://localhost");
+  const token = url.searchParams.get("token");
+  return token ? token.trim() : "";
+}
+
+function isRealtimeTokenValid(token) {
+  if (!env.REALTIME_WS_TOKEN) {
+    return true;
+  }
+
+  const provided = Buffer.from(String(token || ""), "utf8");
+  const expected = Buffer.from(String(env.REALTIME_WS_TOKEN), "utf8");
+  if (provided.length !== expected.length) {
+    return false;
+  }
+
+  return timingSafeEqual(provided, expected);
 }
 
 function safeSend(ws, payload) {
@@ -144,6 +165,13 @@ export function setupRealtimeGateway(httpServer) {
   metrics.connectedAt = new Date().toISOString();
 
   wss.on("connection", async (ws, req) => {
+    const token = parseRealtimeTokenFromRequest(req.url || "");
+    if (!isRealtimeTokenValid(token)) {
+      safeSend(ws, { type: "error", message: "unauthorized" });
+      ws.close(1008, "unauthorized");
+      return;
+    }
+
     const callId = parseCallIdFromRequest(req.url || "");
     sessions.set(ws, { callId });
     metrics.totalConnections += 1;
