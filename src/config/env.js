@@ -21,7 +21,7 @@ const envSchema = z.object({
   MYSQL_CONNECTION_LIMIT: z.string().default("10"),
   MYSQL_SSL_ENABLED: z.string().default("false"),
   MYSQL_SSL_REJECT_UNAUTHORIZED: z.string().default("true"),
-  APPOINTMENTS_PROVIDER: z.enum(["memory", "api"]).default("memory"),
+  APPOINTMENTS_PROVIDER: z.enum(["memory", "api", "mysql"]).default("memory"),
   APPOINTMENTS_API_BASE_URL: z.string().url().default("http://localhost:4001"),
   APPOINTMENTS_API_KEY: z.string().optional(),
   APPOINTMENTS_API_AVAILABILITY_PATH: z.string().default("/api/v1/appointments/availability"),
