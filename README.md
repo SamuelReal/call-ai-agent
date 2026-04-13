@@ -102,7 +102,9 @@ Comportamiento actual del flujo inbound:
 
 Notas:
 - El script usa un fixture WAV en scripts/fixtures/e2e-es.wav.
-- Si el fixture no existe en macOS, intenta generarlo automaticamente con los comandos say y afconvert.
+- Si el fixture no existe, intenta generarlo automaticamente:
+  - macOS: usa say + afconvert.
+  - Otros sistemas: genera un WAV sintetico (tono PCM) directamente en Nodejs.
 - Puedes sobreescribir el archivo de audio con REALTIME_AUDIO_FIXTURE=/ruta/audio.wav.
 - En modo estricto, si no existe un WAV valido, la prueba falla explicitamente con assertion.failed (missing_fixture).
 - Timeout configurable con REALTIME_E2E_TIMEOUT_MS (default: 45000).

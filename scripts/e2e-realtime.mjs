@@ -1,5 +1,5 @@
 import WebSocket from "ws";
-import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 
@@ -58,9 +58,59 @@ function tryGenerateFixtureWav(path, text) {
   return convert.status === 0 && existsSync(path);
 }
 
+function buildSineWaveWavBuffer({
+  sampleRate = 16000,
+  durationSeconds = 1.6,
+  frequencyHz = 440,
+  amplitude = 0.2
+} = {}) {
+  const totalSamples = Math.max(1, Math.floor(sampleRate * durationSeconds));
+  const bytesPerSample = 2;
+  const channels = 1;
+  const dataSize = totalSamples * bytesPerSample * channels;
+  const wav = Buffer.alloc(44 + dataSize);
+
+  wav.write("RIFF", 0);
+  wav.writeUInt32LE(36 + dataSize, 4);
+  wav.write("WAVE", 8);
+  wav.write("fmt ", 12);
+  wav.writeUInt32LE(16, 16); // PCM header size
+  wav.writeUInt16LE(1, 20); // PCM format
+  wav.writeUInt16LE(channels, 22);
+  wav.writeUInt32LE(sampleRate, 24);
+  wav.writeUInt32LE(sampleRate * channels * bytesPerSample, 28);
+  wav.writeUInt16LE(channels * bytesPerSample, 32);
+  wav.writeUInt16LE(16, 34);
+  wav.write("data", 36);
+  wav.writeUInt32LE(dataSize, 40);
+
+  for (let i = 0; i < totalSamples; i += 1) {
+    const t = i / sampleRate;
+    const sample = Math.sin(2 * Math.PI * frequencyHz * t) * amplitude;
+    const int16 = Math.max(-1, Math.min(1, sample)) * 32767;
+    wav.writeInt16LE(Math.round(int16), 44 + i * 2);
+  }
+
+  return wav;
+}
+
+function tryGenerateSyntheticFixtureWav(path) {
+  try {
+    mkdirSync(dirname(path), { recursive: true });
+    const wav = buildSineWaveWavBuffer();
+    writeFileSync(path, wav);
+    return existsSync(path);
+  } catch {
+    return false;
+  }
+}
+
 function loadAudioFixtureBase64() {
   if (!existsSync(fixturePath)) {
-    const generated = tryGenerateFixtureWav(fixturePath, fallbackTranscript);
+    let generated = tryGenerateFixtureWav(fixturePath, fallbackTranscript);
+    if (!generated) {
+      generated = tryGenerateSyntheticFixtureWav(fixturePath);
+    }
     if (generated) {
       // eslint-disable-next-line no-console
       console.log({ type: "fixture.generated", path: fixturePath });
