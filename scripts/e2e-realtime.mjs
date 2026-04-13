@@ -7,14 +7,27 @@ const baseUrl = process.env.BASE_WS_URL || "ws://localhost:3000";
 const args = process.argv.slice(2);
 const strictNoFallback = args.includes("--assert-no-fallback");
 const callId = args.find((arg) => !arg.startsWith("--")) || "zd_realtime_1";
-const ws = new WebSocket(`${baseUrl}/ws/realtime?callId=${encodeURIComponent(callId)}`);
 const fallbackTranscript = "hola, necesito una cita para manana por la manana";
 const fixturePath = process.env.REALTIME_AUDIO_FIXTURE || resolve(process.cwd(), "scripts/fixtures/e2e-es.wav");
+const timeoutMs = Number(process.env.REALTIME_E2E_TIMEOUT_MS || 45000);
 
 let seenStt = false;
 let seenTts = false;
 let sttFallback = false;
 let ttsFallback = false;
+let settled = false;
+
+function finish(code, payload) {
+  if (settled) {
+    return;
+  }
+  settled = true;
+  if (payload) {
+    // eslint-disable-next-line no-console
+    (code === 0 ? console.log : console.error)(payload);
+  }
+  process.exit(code);
+}
 
 function commandAvailable(name) {
   const result = spawnSync("which", [name], { stdio: "ignore" });
@@ -55,6 +68,9 @@ function loadAudioFixtureBase64() {
   }
 
   if (!existsSync(fixturePath)) {
+    if (strictNoFallback) {
+      throw new Error("missing_audio_fixture_for_strict_mode");
+    }
     // eslint-disable-next-line no-console
     console.warn({
       type: "fixture.missing",
@@ -67,7 +83,22 @@ function loadAudioFixtureBase64() {
   return readFileSync(fixturePath).toString("base64");
 }
 
-const fixtureAudioBase64 = loadAudioFixtureBase64();
+let fixtureAudioBase64;
+try {
+  fixtureAudioBase64 = loadAudioFixtureBase64();
+} catch (error) {
+  finish(1, {
+    type: "assertion.failed",
+    reason: "missing_fixture",
+    path: fixturePath,
+    message: error?.message || "unable_to_prepare_audio_fixture"
+  });
+}
+
+const ws = new WebSocket(`${baseUrl}/ws/realtime?callId=${encodeURIComponent(callId)}`);
+const watchdog = setTimeout(() => {
+  finish(1, { type: "assertion.failed", reason: "timeout", timeoutMs });
+}, timeoutMs);
 
 function sendAudioChunk(transcript, isFinal = true) {
   ws.send(
@@ -111,6 +142,7 @@ ws.on("message", (raw) => {
 });
 
 ws.on("close", () => {
+  clearTimeout(watchdog);
   if (strictNoFallback) {
     const missing = [];
     if (!seenStt) {
@@ -121,28 +153,23 @@ ws.on("close", () => {
     }
 
     if (missing.length > 0) {
-      // eslint-disable-next-line no-console
-      console.error({ type: "assertion.failed", reason: "missing_events", missing });
-      process.exit(1);
+      finish(1, { type: "assertion.failed", reason: "missing_events", missing });
       return;
     }
 
     if (sttFallback || ttsFallback) {
-      // eslint-disable-next-line no-console
-      console.error({ type: "assertion.failed", reason: "fallback_detected", sttFallback, ttsFallback });
-      process.exit(1);
+      finish(1, { type: "assertion.failed", reason: "fallback_detected", sttFallback, ttsFallback });
       return;
     }
 
-    // eslint-disable-next-line no-console
-    console.log({ type: "assertion.passed", strictNoFallback: true });
+    finish(0, { type: "assertion.passed", strictNoFallback: true });
+    return;
   }
 
-  process.exit(0);
+  finish(0);
 });
 
 ws.on("error", (err) => {
-  // eslint-disable-next-line no-console
-  console.error("realtime test failed", err.message);
-  process.exit(1);
+  clearTimeout(watchdog);
+  finish(1, { type: "assertion.failed", reason: "ws_error", message: err.message });
 });

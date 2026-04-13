@@ -104,6 +104,8 @@ Notas:
 - El script usa un fixture WAV en scripts/fixtures/e2e-es.wav.
 - Si el fixture no existe en macOS, intenta generarlo automaticamente con los comandos say y afconvert.
 - Puedes sobreescribir el archivo de audio con REALTIME_AUDIO_FIXTURE=/ruta/audio.wav.
+- En modo estricto, si no existe un WAV valido, la prueba falla explicitamente con assertion.failed (missing_fixture).
+- Timeout configurable con REALTIME_E2E_TIMEOUT_MS (default: 45000).
 
 ### 6) CRUD básico de clientes
 Si INTERNAL_API_KEY esta definido en entorno, estos endpoints requieren header:
