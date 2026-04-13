@@ -2,6 +2,7 @@ import { env } from "../../../config/env.js";
 import { logger } from "../../../observability/logger.js";
 import { setCallState } from "../../calls/call.service.js";
 import { generateReplyText } from "../../ai/deepseek/deepseek.service.js";
+import { checkAvailability, createAppointment } from "../../appointments/appointment.service.js";
 import { createZadarmaApiSignature, isValidZadarmaSignature } from "./zadarma.security.js";
 
 function normalizeEvent(payload) {
@@ -9,9 +10,28 @@ function normalizeEvent(payload) {
     event: payload?.event || payload?.event_name || payload?.type,
     callId: payload?.callId || payload?.call_id || payload?.pbx_call_id,
     direction: payload?.direction || payload?.call_direction,
+    from: payload?.from || payload?.caller_id || payload?.phone,
     text: payload?.text || payload?.speech || payload?.transcript,
     outcome: payload?.outcome || payload?.status
   };
+}
+
+function pickSlotFromTranscript(transcript, slots) {
+  const text = String(transcript || "").toLowerCase();
+
+  if ((text.includes("09:30") || text.includes("9:30") || text.includes("nueve y media")) && slots[0]) {
+    return slots.find((slot) => slot.includes("T09:30")) || null;
+  }
+
+  if ((text.includes("11:00") || text.includes("11") || text.includes("once")) && slots[0]) {
+    return slots.find((slot) => slot.includes("T11:00")) || null;
+  }
+
+  if ((text.includes("16:00") || text.includes("16") || text.includes("cuatro de la tarde")) && slots[0]) {
+    return slots.find((slot) => slot.includes("T16:00")) || null;
+  }
+
+  return null;
 }
 
 async function callZadarmaApi({ path, payload }) {
@@ -74,8 +94,45 @@ export async function handleZadarmaEvent({ payload, headers, rawBody, correlatio
   }
 
   if (event === "speech.final") {
+    const transcript = normalized.text || "";
+    const availableSlots = checkAvailability({ timezone: env.DEFAULT_TIMEZONE });
+    const selectedSlot = pickSlotFromTranscript(transcript, availableSlots);
+
+    if (selectedSlot) {
+      const appointment = createAppointment({
+        name: "Cliente voz",
+        phone: normalized.from || "unknown",
+        slot: selectedSlot,
+        source: "voice_bot"
+      });
+
+      if (appointment) {
+        setCallState(callId, "BOOKING", {
+          outcome: "booked_pending_end",
+          appointmentId: appointment.appointmentId,
+          selectedSlot,
+          lastBotReply: `Perfecto, he reservado tu cita para ${selectedSlot}. Tu codigo es ${appointment.appointmentId}.`,
+          aiProvider: "rule-engine",
+          aiModel: "slot-parser-v1",
+          aiFallback: false
+        });
+        logger.info({ callId, correlationId, appointmentId: appointment.appointmentId, selectedSlot }, "Appointment booked from speech");
+        logger.info({ callId, correlationId, event }, "Zadarma event processed");
+        return { accepted: true };
+      }
+
+      setCallState(callId, "SLOT_COLLECTION", {
+        lastBotReply: "Ese horario ya no esta disponible. Prefieres 09:30 o 11:00?",
+        aiProvider: "rule-engine",
+        aiModel: "slot-parser-v1",
+        aiFallback: false
+      });
+      logger.info({ callId, correlationId, event }, "Zadarma event processed");
+      return { accepted: true };
+    }
+
     const answer = await generateReplyText({
-      transcript: normalized.text || "",
+      transcript,
       context: { callId, intent: "book_appointment" }
     });
 

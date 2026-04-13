@@ -53,5 +53,16 @@ curl -X POST http://localhost:3000/api/v1/telephony/zadarma/webhook \
   -H "Content-Type: application/json" \
   -d '{"event":"call.started","callId":"zd_123","direction":"inbound","from":"+34","to":"+34"}'
 
+### 5) Ejecutar flujo E2E inbound completo
+npm run e2e:inbound
+
+Opcional: definir callId personalizado
+npm run e2e:inbound -- zd_prueba_99
+
+Comportamiento actual del flujo inbound:
+- Si el usuario menciona un horario reconocible (09:30, 11:00 o 16:00), el sistema intenta crear la cita automaticamente.
+- Si la reserva se confirma, el estado de llamada pasa a BOOKING y guarda appointmentId.
+- Si no se detecta horario, el flujo sigue por respuesta IA para recolectar preferencia.
+
 ## Estado actual
 Este proyecto se encuentra aún en desarrollo y no está listo para pasar a producción.
