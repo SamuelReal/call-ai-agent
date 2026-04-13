@@ -12,6 +12,12 @@ const envSchema = z.object({
   DEEPSEEK_BASE_URL: z.string().url().default("https://api.deepseek.com"),
   DEEPSEEK_MODEL: z.string().default("deepseek-chat"),
   DEEPSEEK_TIMEOUT_MS: z.string().default("12000"),
+  APPOINTMENTS_PROVIDER: z.enum(["memory", "api"]).default("memory"),
+  APPOINTMENTS_API_BASE_URL: z.string().url().default("http://localhost:4001"),
+  APPOINTMENTS_API_KEY: z.string().optional(),
+  APPOINTMENTS_API_AVAILABILITY_PATH: z.string().default("/api/v1/appointments/availability"),
+  APPOINTMENTS_API_CREATE_PATH: z.string().default("/api/v1/appointments"),
+  APPOINTMENTS_TIMEOUT_MS: z.string().default("6000"),
   ZADARMA_BASE_URL: z.string().url().default("https://api.zadarma.com"),
   ZADARMA_API_KEY: z.string().optional(),
   ZADARMA_API_SECRET: z.string().optional(),
@@ -32,5 +38,6 @@ export const env = {
   ...parsed.data,
   PORT: Number(parsed.data.PORT),
   DEEPSEEK_TIMEOUT_MS: Number(parsed.data.DEEPSEEK_TIMEOUT_MS),
+  APPOINTMENTS_TIMEOUT_MS: Number(parsed.data.APPOINTMENTS_TIMEOUT_MS),
   ZADARMA_WEBHOOK_TOLERANCE_SEC: Number(parsed.data.ZADARMA_WEBHOOK_TOLERANCE_SEC)
 };

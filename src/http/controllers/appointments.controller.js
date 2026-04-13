@@ -14,23 +14,23 @@ const createSchema = z.object({
   source: z.string().default("voice_bot")
 });
 
-export function availabilityHandler(req, res) {
+export async function availabilityHandler(req, res) {
   const parsed = availabilitySchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: "validation_error", details: parsed.error.flatten() });
   }
 
-  const slots = checkAvailability(parsed.data);
+  const slots = await checkAvailability(parsed.data);
   return res.status(200).json({ slots });
 }
 
-export function createAppointmentHandler(req, res) {
+export async function createAppointmentHandler(req, res) {
   const parsed = createSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: "validation_error", details: parsed.error.flatten() });
   }
 
-  const appointment = createAppointment(parsed.data);
+  const appointment = await createAppointment(parsed.data);
   if (!appointment) {
     return res.status(409).json({ error: "slot_unavailable" });
   }

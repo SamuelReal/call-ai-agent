@@ -1,8 +1,9 @@
 import { env } from "../../../config/env.js";
 import { logger } from "../../../observability/logger.js";
-import { setCallState } from "../../calls/call.service.js";
+import { getCallStatus, setCallState } from "../../calls/call.service.js";
 import { generateReplyText } from "../../ai/deepseek/deepseek.service.js";
 import { checkAvailability, createAppointment } from "../../appointments/appointment.service.js";
+import { ensureCustomerByPhone, setCustomerNameByPhone } from "../../customers/customer.service.js";
 import { createZadarmaApiSignature, isValidZadarmaSignature } from "./zadarma.security.js";
 
 function normalizeEvent(payload) {
@@ -32,6 +33,27 @@ function pickSlotFromTranscript(transcript, slots) {
   }
 
   return null;
+}
+
+function extractNameFromTranscript(transcript) {
+  const text = String(transcript || "").trim();
+  if (!text) {
+    return "";
+  }
+
+  const patterns = [
+    /(?:me llamo|mi nombre es|soy)\s+([a-zA-Z\s]{2,40})/i,
+    /(?:nombre)\s*[:\-]?\s*([a-zA-Z\s]{2,40})/i
+  ];
+
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match?.[1]) {
+      return match[1].trim().replace(/\s+/g, " ");
+    }
+  }
+
+  return "";
 }
 
 async function callZadarmaApi({ path, payload }) {
@@ -85,23 +107,62 @@ export async function handleZadarmaEvent({ payload, headers, rawBody, correlatio
   }
 
   if (event === "call.started") {
+    const customer = ensureCustomerByPhone(normalized.from || "unknown");
+    const hasName = Boolean(customer?.name);
+
     setCallState(callId, "GREETING", {
       direction: normalized.direction || "inbound",
       intent: "book_appointment",
       outcome: null,
-      correlationId
+      correlationId,
+      customerPhone: customer?.phone || normalized.from || "unknown",
+      customerId: customer?.customerId || null,
+      customerName: customer?.name || "",
+      awaitingCustomerName: !hasName,
+      lastBotReply: hasName
+        ? `Hola ${customer.name}, te ayudo a agendar tu cita.`
+        : "Hola, para continuar necesito tu nombre completo."
     });
   }
 
   if (event === "speech.final") {
+    const currentCall = getCallStatus(callId) || {};
     const transcript = normalized.text || "";
-    const availableSlots = checkAvailability({ timezone: env.DEFAULT_TIMEZONE });
+    const currentPhone = currentCall.customerPhone || normalized.from || "unknown";
+    const currentName = currentCall.customerName || "";
+
+    if (!currentName) {
+      const extractedName = extractNameFromTranscript(transcript);
+      if (!extractedName) {
+        setCallState(callId, "CUSTOMER_NAME_REQUIRED", {
+          customerPhone: currentPhone,
+          customerName: "",
+          awaitingCustomerName: true,
+          lastBotReply: "Para poder reservar, por favor dime tu nombre completo."
+        });
+        logger.info({ callId, correlationId, event }, "Customer name requested");
+        return { accepted: true };
+      }
+
+      const updatedCustomer = setCustomerNameByPhone(currentPhone, extractedName);
+      setCallState(callId, "SLOT_COLLECTION", {
+        customerPhone: currentPhone,
+        customerId: updatedCustomer?.customerId || currentCall.customerId || null,
+        customerName: updatedCustomer?.name || extractedName,
+        awaitingCustomerName: false,
+        lastBotReply: `Gracias ${updatedCustomer?.name || extractedName}. Ahora dime que horario prefieres: 09:30, 11:00 o 16:00.`
+      });
+      logger.info({ callId, correlationId, customerName: updatedCustomer?.name || extractedName }, "Customer name captured");
+      return { accepted: true };
+    }
+
+    const availableSlots = await checkAvailability({ timezone: env.DEFAULT_TIMEZONE });
     const selectedSlot = pickSlotFromTranscript(transcript, availableSlots);
 
     if (selectedSlot) {
-      const appointment = createAppointment({
-        name: "Cliente voz",
-        phone: normalized.from || "unknown",
+      const appointment = await createAppointment({
+        name: currentName,
+        phone: currentPhone,
         slot: selectedSlot,
         source: "voice_bot"
       });
@@ -114,7 +175,9 @@ export async function handleZadarmaEvent({ payload, headers, rawBody, correlatio
           lastBotReply: `Perfecto, he reservado tu cita para ${selectedSlot}. Tu codigo es ${appointment.appointmentId}.`,
           aiProvider: "rule-engine",
           aiModel: "slot-parser-v1",
-          aiFallback: false
+          aiFallback: false,
+          customerPhone: currentPhone,
+          customerName: currentName
         });
         logger.info({ callId, correlationId, appointmentId: appointment.appointmentId, selectedSlot }, "Appointment booked from speech");
         logger.info({ callId, correlationId, event }, "Zadarma event processed");
@@ -125,7 +188,9 @@ export async function handleZadarmaEvent({ payload, headers, rawBody, correlatio
         lastBotReply: "Ese horario ya no esta disponible. Prefieres 09:30 o 11:00?",
         aiProvider: "rule-engine",
         aiModel: "slot-parser-v1",
-        aiFallback: false
+        aiFallback: false,
+        customerPhone: currentPhone,
+        customerName: currentName
       });
       logger.info({ callId, correlationId, event }, "Zadarma event processed");
       return { accepted: true };
@@ -140,7 +205,9 @@ export async function handleZadarmaEvent({ payload, headers, rawBody, correlatio
       lastBotReply: answer.text,
       aiProvider: answer.provider || "deepseek",
       aiModel: answer.model || env.DEEPSEEK_MODEL,
-      aiFallback: Boolean(answer.fallback)
+      aiFallback: Boolean(answer.fallback),
+      customerPhone: currentPhone,
+      customerName: currentName
     });
 
     logger.info({ callId, correlationId, answer: answer.text }, "Generated DeepSeek response");
