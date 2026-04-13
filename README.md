@@ -27,6 +27,7 @@ Backend inicial para agente IA de llamadas con arquitectura preparada para:
   - STORAGE_PROVIDER=mysql
   - APPOINTMENTS_PROVIDER=mysql (opcional; si no se define y STORAGE_PROVIDER=mysql, usara MySQL para citas)
 - El backend ejecuta las migraciones automáticamente en el primer acceso a MySQL.
+- También puedes ejecutarlas manualmente con: npm run db:migrate
 
 Servidor por defecto:
 - http://localhost:3000

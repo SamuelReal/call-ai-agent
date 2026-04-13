@@ -25,6 +25,13 @@ async function getMigrationFiles() {
   return files.filter((name) => name.endsWith(".sql")).sort();
 }
 
+function splitSqlStatements(sql) {
+  return sql
+    .split(/;\s*\n/g)
+    .map((statement) => statement.trim())
+    .filter((statement) => statement.length > 0);
+}
+
 export async function runMySqlMigrations(db) {
   if (!db) {
     throw new Error("runMySqlMigrations requires a MySQL pool instance");
@@ -41,7 +48,10 @@ export async function runMySqlMigrations(db) {
     }
 
     const sql = await fs.readFile(path.join(migrationsDir, file), "utf8");
-    await db.query(sql);
+    const statements = splitSqlStatements(sql);
+    for (const statement of statements) {
+      await db.query(statement);
+    }
     await db.query("INSERT INTO schema_migrations (migration_name) VALUES (?)", [file]);
   }
 }
