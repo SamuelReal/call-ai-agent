@@ -36,6 +36,10 @@ Servidor por defecto:
 - POST /api/v1/customers
 - PATCH /api/v1/customers/:phone
 
+Nota de seguridad:
+- Si INTERNAL_API_KEY esta definido, endpoints de customers y appointments requieren header x-internal-api-key.
+- El webhook de Zadarma tiene rate limit en memoria configurable.
+
 ## Pruebas rápidas
 ### 1) Crear llamada outbound
 curl -X POST http://localhost:3000/api/v1/calls/outbound \
@@ -89,6 +93,19 @@ curl -X PATCH "http://localhost:3000/api/v1/customers/%2B34999999999" \
   -H "x-internal-api-key: <internal_api_key>" \
   -H "Content-Type: application/json" \
   -d '{"name":"Cliente Demo"}'
+
+### 7) Agenda interna (con INTERNAL_API_KEY)
+Consultar disponibilidad:
+curl -X POST "http://localhost:3000/api/v1/appointments/availability" \
+  -H "x-internal-api-key: <internal_api_key>" \
+  -H "Content-Type: application/json" \
+  -d '{"dateFrom":"2026-04-16","dateTo":"2026-04-20","timezone":"Europe/Madrid"}'
+
+## Rate limits configurables
+- WEBHOOK_RATE_LIMIT_MAX
+- WEBHOOK_RATE_LIMIT_WINDOW_MS
+- INTERNAL_RATE_LIMIT_MAX
+- INTERNAL_RATE_LIMIT_WINDOW_MS
 
 ## Estado actual
 Este proyecto se encuentra aún en desarrollo y no está listo para pasar a producción.

@@ -19,6 +19,10 @@ const envSchema = z.object({
   APPOINTMENTS_API_CREATE_PATH: z.string().default("/api/v1/appointments"),
   APPOINTMENTS_TIMEOUT_MS: z.string().default("6000"),
   INTERNAL_API_KEY: z.string().optional(),
+  WEBHOOK_RATE_LIMIT_MAX: z.string().default("120"),
+  WEBHOOK_RATE_LIMIT_WINDOW_MS: z.string().default("60000"),
+  INTERNAL_RATE_LIMIT_MAX: z.string().default("60"),
+  INTERNAL_RATE_LIMIT_WINDOW_MS: z.string().default("60000"),
   ZADARMA_BASE_URL: z.string().url().default("https://api.zadarma.com"),
   ZADARMA_API_KEY: z.string().optional(),
   ZADARMA_API_SECRET: z.string().optional(),
@@ -40,5 +44,9 @@ export const env = {
   PORT: Number(parsed.data.PORT),
   DEEPSEEK_TIMEOUT_MS: Number(parsed.data.DEEPSEEK_TIMEOUT_MS),
   APPOINTMENTS_TIMEOUT_MS: Number(parsed.data.APPOINTMENTS_TIMEOUT_MS),
+  WEBHOOK_RATE_LIMIT_MAX: Number(parsed.data.WEBHOOK_RATE_LIMIT_MAX),
+  WEBHOOK_RATE_LIMIT_WINDOW_MS: Number(parsed.data.WEBHOOK_RATE_LIMIT_WINDOW_MS),
+  INTERNAL_RATE_LIMIT_MAX: Number(parsed.data.INTERNAL_RATE_LIMIT_MAX),
+  INTERNAL_RATE_LIMIT_WINDOW_MS: Number(parsed.data.INTERNAL_RATE_LIMIT_WINDOW_MS),
   ZADARMA_WEBHOOK_TOLERANCE_SEC: Number(parsed.data.ZADARMA_WEBHOOK_TOLERANCE_SEC)
 };
