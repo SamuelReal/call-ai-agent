@@ -45,6 +45,15 @@ export async function ensureMySqlSchema() {
         updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       )
     `);
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS calls (
+        call_id VARCHAR(64) PRIMARY KEY,
+        data_json JSON NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )
+    `);
   })();
 
   return schemaReadyPromise;

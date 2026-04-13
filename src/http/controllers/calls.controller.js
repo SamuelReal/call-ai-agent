@@ -17,8 +17,8 @@ export async function createOutboundCallHandler(req, res) {
   return res.status(202).json(job);
 }
 
-export function getCallStatusHandler(req, res) {
-  const status = getCallStatus(req.params.callId);
+export async function getCallStatusHandler(req, res) {
+  const status = await getCallStatus(req.params.callId);
   if (!status) {
     return res.status(404).json({ error: "not_found", message: "call not found" });
   }

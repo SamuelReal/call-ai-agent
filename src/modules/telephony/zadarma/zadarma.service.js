@@ -110,7 +110,7 @@ export async function handleZadarmaEvent({ payload, headers, rawBody, correlatio
     const customer = await ensureCustomerByPhone(normalized.from || "unknown");
     const hasName = Boolean(customer?.name);
 
-    setCallState(callId, "GREETING", {
+    await setCallState(callId, "GREETING", {
       direction: normalized.direction || "inbound",
       intent: "book_appointment",
       outcome: null,
@@ -126,7 +126,7 @@ export async function handleZadarmaEvent({ payload, headers, rawBody, correlatio
   }
 
   if (event === "speech.final") {
-    const currentCall = getCallStatus(callId) || {};
+    const currentCall = (await getCallStatus(callId)) || {};
     const transcript = normalized.text || "";
     const currentPhone = currentCall.customerPhone || normalized.from || "unknown";
     const currentName = currentCall.customerName || "";
@@ -134,7 +134,7 @@ export async function handleZadarmaEvent({ payload, headers, rawBody, correlatio
     if (!currentName) {
       const extractedName = extractNameFromTranscript(transcript);
       if (!extractedName) {
-        setCallState(callId, "CUSTOMER_NAME_REQUIRED", {
+        await setCallState(callId, "CUSTOMER_NAME_REQUIRED", {
           customerPhone: currentPhone,
           customerName: "",
           awaitingCustomerName: true,
@@ -145,7 +145,7 @@ export async function handleZadarmaEvent({ payload, headers, rawBody, correlatio
       }
 
       const updatedCustomer = await setCustomerNameByPhone(currentPhone, extractedName);
-      setCallState(callId, "SLOT_COLLECTION", {
+      await setCallState(callId, "SLOT_COLLECTION", {
         customerPhone: currentPhone,
         customerId: updatedCustomer?.customerId || currentCall.customerId || null,
         customerName: updatedCustomer?.name || extractedName,
@@ -168,7 +168,7 @@ export async function handleZadarmaEvent({ payload, headers, rawBody, correlatio
       });
 
       if (appointment) {
-        setCallState(callId, "BOOKING", {
+        await setCallState(callId, "BOOKING", {
           outcome: "booked_pending_end",
           appointmentId: appointment.appointmentId,
           selectedSlot,
@@ -184,7 +184,7 @@ export async function handleZadarmaEvent({ payload, headers, rawBody, correlatio
         return { accepted: true };
       }
 
-      setCallState(callId, "SLOT_COLLECTION", {
+      await setCallState(callId, "SLOT_COLLECTION", {
         lastBotReply: "Ese horario ya no esta disponible. Prefieres 09:30 o 11:00?",
         aiProvider: "rule-engine",
         aiModel: "slot-parser-v1",
@@ -201,7 +201,7 @@ export async function handleZadarmaEvent({ payload, headers, rawBody, correlatio
       context: { callId, intent: "book_appointment" }
     });
 
-    setCallState(callId, "SLOT_COLLECTION", {
+    await setCallState(callId, "SLOT_COLLECTION", {
       lastBotReply: answer.text,
       aiProvider: answer.provider || "deepseek",
       aiModel: answer.model || env.DEEPSEEK_MODEL,
@@ -214,7 +214,7 @@ export async function handleZadarmaEvent({ payload, headers, rawBody, correlatio
   }
 
   if (event === "call.ended") {
-    setCallState(callId, "ENDED", { outcome: normalized.outcome || "unknown" });
+    await setCallState(callId, "ENDED", { outcome: normalized.outcome || "unknown" });
   }
 
   logger.info({ callId, correlationId, event }, "Zadarma event processed");
@@ -232,10 +232,10 @@ export async function createZadarmaOutbound({ phone, callId, campaign }) {
   });
 
   logger.info({ phone, callId, campaign, simulated: result.simulated || false }, "Zadarma outbound dispatch");
-  setCallState(callId, "INTENT_CAPTURE", { direction: "outbound", campaign });
+  await setCallState(callId, "INTENT_CAPTURE", { direction: "outbound", campaign });
 
   if (!result.ok) {
-    setCallState(callId, "FAILED", { outcome: "telephony_error" });
+    await setCallState(callId, "FAILED", { outcome: "telephony_error" });
   }
 
   return result;
