@@ -5,6 +5,7 @@ CALL_ID="${1:-local_rt_strict_1}"
 PORT="${PORT:-3000}"
 LOG_FILE="${REALTIME_LOCAL_LOG_FILE:-.tmp-realtime-local.log}"
 TIMEOUT_SEC="${REALTIME_LOCAL_TIMEOUT_SEC:-30}"
+ZADARMA_SECRET_VALUE="${ZADARMA_SECRET:-local_zadarma_secret}"
 
 port_in_use() {
   local p="$1"
@@ -47,7 +48,7 @@ if port_in_use "$PORT"; then
 fi
 
 : > "$LOG_FILE"
-PORT="$PORT" npm run start > "$LOG_FILE" 2>&1 &
+PORT="$PORT" ZADARMA_SECRET="$ZADARMA_SECRET_VALUE" npm run start > "$LOG_FILE" 2>&1 &
 SERVER_PID=$!
 
 for i in $(seq 1 "$TIMEOUT_SEC"); do

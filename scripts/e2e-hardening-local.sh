@@ -6,7 +6,18 @@ LOG_FILE="${HARDENING_LOCAL_LOG_FILE:-.tmp-hardening-local.log}"
 TIMEOUT_SEC="${HARDENING_LOCAL_TIMEOUT_SEC:-30}"
 INTERNAL_KEY="${INTERNAL_API_KEY:-test_hardening_key}"
 WS_TOKEN="${REALTIME_WS_TOKEN:-test_ws_token}"
+ZADARMA_SECRET_VALUE="${ZADARMA_SECRET:-local_zadarma_secret}"
 BASE_URL=""
+
+build_signed_headers() {
+  local body="$1"
+  local timestamp
+  timestamp="$(date +%s)"
+  local signed_payload="${timestamp}.${body}"
+  local signature
+  signature="$(node -e "const c=require('crypto'); const s=process.argv[1]; const p=process.argv[2]; process.stdout.write(c.createHmac('sha256', s).update(p).digest('hex'));" "$ZADARMA_SECRET_VALUE" "$signed_payload")"
+  echo "$timestamp|$signature"
+}
 
 port_in_use() {
   local p="$1"
@@ -53,7 +64,7 @@ fi
 BASE_URL="http://localhost:${PORT}"
 
 : > "$LOG_FILE"
-PORT="$PORT" INTERNAL_API_KEY="$INTERNAL_KEY" REALTIME_WS_TOKEN="$WS_TOKEN" STT_PROVIDER="mock" TTS_PROVIDER="mock" npm run start > "$LOG_FILE" 2>&1 &
+PORT="$PORT" INTERNAL_API_KEY="$INTERNAL_KEY" REALTIME_WS_TOKEN="$WS_TOKEN" ZADARMA_SECRET="$ZADARMA_SECRET_VALUE" STT_PROVIDER="mock" TTS_PROVIDER="mock" npm run start > "$LOG_FILE" 2>&1 &
 SERVER_PID=$!
 
 for i in $(seq 1 "$TIMEOUT_SEC"); do
@@ -108,8 +119,11 @@ REALTIME_WS_TOKEN="$WS_TOKEN" BASE_WS_URL="ws://localhost:${PORT}" npm run e2e:r
 
 echo "[5/5] checking webhook idempotency"
 BODY='{"event":"call.started","callId":"hardening_dup_1","direction":"inbound","from":"+34111111111"}'
-FIRST="$(curl -fsS -X POST "${BASE_URL}/api/v1/telephony/zadarma/webhook" -H "Content-Type: application/json" -d "$BODY")"
-SECOND="$(curl -fsS -X POST "${BASE_URL}/api/v1/telephony/zadarma/webhook" -H "Content-Type: application/json" -d "$BODY")"
+SIGNED="$(build_signed_headers "$BODY")"
+TS="${SIGNED%%|*}"
+SIG="${SIGNED#*|}"
+FIRST="$(curl -fsS -X POST "${BASE_URL}/api/v1/telephony/zadarma/webhook" -H "Content-Type: application/json" -H "x-zadarma-timestamp: ${TS}" -H "x-zadarma-signature: ${SIG}" -d "$BODY")"
+SECOND="$(curl -fsS -X POST "${BASE_URL}/api/v1/telephony/zadarma/webhook" -H "Content-Type: application/json" -H "x-zadarma-timestamp: ${TS}" -H "x-zadarma-signature: ${SIG}" -d "$BODY")"
 
 if ! echo "$FIRST" | grep -q '"duplicate":false'; then
   echo "Expected first webhook duplicate=false, got: ${FIRST}" >&2

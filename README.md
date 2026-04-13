@@ -11,6 +11,19 @@ Backend inicial para agente IA de llamadas con arquitectura preparada para:
 - Node.js 20+
 - MySQL 8+ (Si se utiliza STORAGE_PROVIDER=mysql)
 
+## Configuracion de producción (obligatoria)
+- El backend valida configuracion critica al arrancar (fail-fast).
+- Si falta una variable requerida, el proceso no inicia.
+- Variables clave:
+  - DEEPSEEK_API_KEY (produccion)
+  - ELEVENLABS_API_KEY (cuando STT/TTS usan elevenlabs)
+  - INTERNAL_API_KEY (produccion)
+  - REALTIME_WS_TOKEN (produccion)
+  - ZADARMA_SECRET (validacion de firma webhook)
+  - MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DATABASE (si MySQL esta habilitado)
+- Validacion predeploy recomendada:
+  - npm run config:check:prod
+
 ## Instalación
 1. Obtener el repositorio:
    - git clone URL
